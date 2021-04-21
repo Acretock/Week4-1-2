@@ -1,20 +1,113 @@
-// Week4-1-2.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
+#include <vector>
 #include <iostream>
+#include <algorithm>
+using namespace std;
+
+struct Image { 
+    double quality;
+    double freshness;
+    double rating;
+};
+
+struct Params {
+    double a;
+    double b;
+    double c;
+};
+
+class FunctionPart
+{
+public:
+	FunctionPart(char op, double v);
+	~FunctionPart();
+
+    double Apply(double source) const {
+        if (operation == '+')
+            return source + value;
+        else 
+            return source - value;
+    }
+
+    void Invert() {
+        if (operation == '+')
+            operation = '-';
+        else
+            operation = '+';
+    }
+
+private:
+    char operation;
+    double value;
+};
+
+FunctionPart::FunctionPart(char op, double v)
+{
+    operation = op;
+    value = v;
+}
+
+FunctionPart::~FunctionPart()
+{
+}
+
+class Function
+{
+public:
+    Function();
+    ~Function();
+
+    void AddPart(char op, double val) {
+        parts.push_back({ op,val });
+    }
+
+    double Apply(double value) const {
+        for (const FunctionPart& part : parts)
+            value = part.Apply(value);
+        return value;
+    }
+
+    void Invert() {
+        for (FunctionPart& part : parts)
+            part.Invert();
+        reverse(begin(parts), end(parts));
+    }
+
+private:
+    vector<FunctionPart> parts;
+};
+
+Function::Function()
+{
+}
+
+Function::~Function()
+{
+}
+
+Function MakeWeightFunction(const Params& params, const Image& image) {
+    Function function;
+    function.AddPart('-', image.freshness * params.a + params.b);
+    function.AddPart('+', image.rating * params.c);
+    return function;
+}
+
+double ComputeImageWeight(const Params& params, const Image& image) {
+    Function function = MakeWeightFunction(params, image);
+    return function.Apply(image.quality);
+}
+
+double ComputeQualityByWeight(const Params& params,
+    const Image& image, double weight) {
+    Function function = MakeWeightFunction(params, image);
+    function.Invert();
+    return function.Apply(weight);
+}
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    Image image = { 10,2,6 };
+    Params params = { 4,2,6 };
+    cout << ComputeImageWeight(params, image) << endl;
+    cout << ComputeQualityByWeight(params, image, 46) << endl;
+    return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
